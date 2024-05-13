@@ -291,8 +291,8 @@ int get_kb_from_serial() {
             switch (r2) {
               case 48: return KB_F9;       // 27 91 50 48 126
               case 49: return KB_F10;      // 27 91 50 49 126
-              case 50: return KB_F11;      // 27 91 50 51 126
-              case 51: return KB_F12;      // 27 91 50 52 126
+              case 51: return KB_F11;      // 27 91 50 51 126
+              case 52: return KB_F12;      // 27 91 50 52 126
             }
             #if KB_DBG
               sprintf(kb_buffer, "%s error 27->91->50->%i->126", kb_buffer, r2);
