@@ -1,8 +1,4 @@
-/**
- Begin keyboard.cpp
-**/
-
-#define KB_DBG 1
+#define KB_DBG 0
 #if KB_DBG
 char kb_buffer[255];
 #endif
@@ -184,13 +180,6 @@ int get_kb_from_serial() {
         }
         r = Serial.read();
 // 27->91->r
-        if (!Serial.available()) {
-          #if KB_DBG
-            sprintf(kb_buffer, "%s error 27->91->%i->not available", kb_buffer, r);
-            Serial.println(kb_buffer);
-          #endif
-          return KB_ERROR;
-        }
         #if KB_DBG
           sprintf(kb_buffer, "%s 3=r=%i", kb_buffer, r);
           Serial.println(kb_buffer);
@@ -200,6 +189,13 @@ int get_kb_from_serial() {
           case 66: return KB_DOWN;
           case 68: return KB_LEFT;
           case 67: return KB_RIGHT;
+        }
+        if (!Serial.available()) {
+          #if KB_DBG
+            sprintf(kb_buffer, "%s error 27->91->%i->not available", kb_buffer, r);
+            Serial.println(kb_buffer);
+          #endif
+          return KB_ERROR;
         }
         r2 = Serial.read();
 // 27->91->r->r2
@@ -664,7 +660,3 @@ unsigned char kb_to_SpecialScanCode(int* shift, int kb) {
   }
   return 0;
 }
-
-/**
- End keyboard.cpp
-**/
