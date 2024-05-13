@@ -2,7 +2,7 @@
  Begin keyboard.cpp
 **/
 
-#define KB_DBG 0
+#define KB_DBG 1
 #if KB_DBG
 char kb_buffer[255];
 #endif
@@ -153,62 +153,105 @@ char* kb_to_string(int kb) {
 
 int get_kb_from_serial() {
     int r = Serial.read();
+    int r2;
     #if KB_DBG
       *kb_buffer = 0;
-      //sprintf(kb_buffer, "%i ", r);
+      sprintf(kb_buffer, "1=%i ", r);
+      Serial.println(kb_buffer);
     #endif
+// 27
     if (r == 27) {
-      if (Serial.available() > 0) {
-        if (Serial.read() != 91) {
+      if (Serial.available()) {
+        r2 = Serial.read();
+        #if KB_DBG
+          sprintf(kb_buffer, "%s 2=%i ", kb_buffer, r2);
+          Serial.println(kb_buffer);
+        #endif
+        if (r2 != 91) {
           #if KB_DBG
             sprintf(kb_buffer, "%s error 27->not 91", kb_buffer);
             Serial.println(kb_buffer);
           #endif
           return KB_ERROR;
         }
+// 27 -> 91
         if (!Serial.available()) {
           #if KB_DBG
-            sprintf(kb_buffer, "%s error 27->not available", kb_buffer);
+            sprintf(kb_buffer, "%s error 27->91->not available", kb_buffer);
             Serial.println(kb_buffer);
           #endif
           return KB_ERROR;
         }
         r = Serial.read();
+// 27->91->r
         if (!Serial.available()) {
           #if KB_DBG
-            sprintf(kb_buffer, "%s error 27->%i->not available", kb_buffer, r);
+            sprintf(kb_buffer, "%s error 27->91->%i->not available", kb_buffer, r);
             Serial.println(kb_buffer);
           #endif
           return KB_ERROR;
         }
-        if (Serial.read() != 126) {
+        #if KB_DBG
+          sprintf(kb_buffer, "%s 3=r=%i", kb_buffer, r);
+          Serial.println(kb_buffer);
+        #endif
+        switch (r) {
+          case 65: return KB_UP;
+          case 66: return KB_DOWN;
+          case 68: return KB_LEFT;
+          case 67: return KB_RIGHT;
+        }
+        r2 = Serial.read();
+// 27->91->r->r2
+        #if KB_DBG
+          sprintf(kb_buffer, "%s 4=r2=%i", kb_buffer, r2);
+          Serial.println(kb_buffer);
+        #endif
+        if (r2 == 126) {
+// 27->91->r->126
           #if KB_DBG
-            sprintf(kb_buffer, "%s error 27->%i->not 126", kb_buffer, r);
+            sprintf(kb_buffer, "%s 27->91->r->126 ", kb_buffer);
+            Serial.println(kb_buffer);
+          #endif
+          switch (r) {
+            case 50: return KB_INS;
+            case 49: return KB_HOME;
+            case 53: return KB_PGUP;
+            case 51: return KB_DEL;
+            case 52: return KB_END;
+            case 54: return KB_PGDN;
+          }
+          #if KB_DBG
+            sprintf(kb_buffer, "%s error 27->91->%i->%i", kb_buffer, r, r2);
             Serial.println(kb_buffer);
           #endif
           return KB_ERROR;
         }
+// 27->91->r->r2
         switch (r) {
           case 49:
+// 27->91->49->r2
             if (!Serial.available()) {
               #if KB_DBG
-                sprintf(kb_buffer, "%s error 27->49->not available", kb_buffer);
+                sprintf(kb_buffer, "%s error 27->91->49->not available", kb_buffer);
                 Serial.println(kb_buffer);
               #endif
               return KB_ERROR;
             }
             r = Serial.read();
-            if (r == 126) {
-              return KB_HOME;              // 27 91 49 126
-            }
-            if (!Serial.available()) {
+// 27->91->49->r2->r
+            #if KB_DBG
+              sprintf(kb_buffer, "%s 5=%i", kb_buffer, r);
+              Serial.println(kb_buffer);
+            #endif
+            if (r != 126) {
               #if KB_DBG
-                sprintf(kb_buffer, "%s error 27->49->%i->not available", kb_buffer, r);
+                sprintf(kb_buffer, "%s error not 126", kb_buffer);
                 Serial.println(kb_buffer);
               #endif
               return KB_ERROR;
             }
-            switch (r) {
+            switch (r2) {
               case 49: return KB_F1;       // 27 91 49 49 126
               case 50: return KB_F2;       // 27 91 49 50 126
               case 51: return KB_F3;       // 27 91 49 51 126
@@ -218,59 +261,61 @@ int get_kb_from_serial() {
               case 56: return KB_F7;       // 27 91 49 56 126
               case 57: return KB_F8;       // 27 91 49 57 126
             }
+            #if KB_DBG
+              sprintf(kb_buffer, "%s 4=unrecognized", kb_buffer);
+              Serial.println(kb_buffer);
+            #endif
             return KB_ERROR;
           case 50:
+// 27->91->50->r2
             if (!Serial.available()) {
               #if KB_DBG
-                sprintf(kb_buffer, "%s error 27->50->not available", kb_buffer, r);
+                sprintf(kb_buffer, "%s error 27->50->not available", kb_buffer);
                 Serial.println(kb_buffer);
               #endif
               return KB_ERROR;
             }
             r = Serial.read();
-            if (r == 126) {
-              return KB_INS;               // 27 91 50 126
-            }
-            if (!Serial.available()) {
-              #if KB_DBG
-                sprintf(kb_buffer, "%s error 27->50->%i->not available", kb_buffer, r);
-                Serial.println(kb_buffer);
-              #endif
-              return KB_ERROR;
-            }
-            if (Serial.read() != 126) {
+// 27->91->50->r2->r
+            if (r != 126) {
               #if KB_DBG
                 sprintf(kb_buffer, "%s error 27->50->%i->not 126", kb_buffer, r);
                 Serial.println(kb_buffer);
               #endif
               return KB_ERROR;
             }
-            switch (r) {
+            #if KB_DBG
+              sprintf(kb_buffer, "%s 5=%i", kb_buffer, r);
+              Serial.println(kb_buffer);
+            #endif
+            switch (r2) {
               case 48: return KB_F9;       // 27 91 50 48 126
               case 49: return KB_F10;      // 27 91 50 49 126
               case 50: return KB_F11;      // 27 91 50 51 126
               case 51: return KB_F12;      // 27 91 50 52 126
             }
             #if KB_DBG
-              sprintf(kb_buffer, "%s error 27->50->%i->126", kb_buffer, r);
+              sprintf(kb_buffer, "%s error 27->91->50->%i->126", kb_buffer, r2);
               Serial.println(kb_buffer);
             #endif
             return KB_ERROR;
-
-          case 65: return KB_UP;           // 27 91 65
-          case 66: return KB_DOWN;         // 27 91 66
-          case 68: return KB_LEFT;         // 27 91 68
-          case 67: return KB_RIGHT;        // 27 91 67
-          #if KB_DBG
-            sprintf(kb_buffer, "%s error 27->%i", kb_buffer, r);
-            Serial.println(kb_buffer);
-          #endif
-          return KB_ERROR;
         }
+        #if KB_DBG
+          sprintf(kb_buffer, "%s error 27->%i", kb_buffer, r);
+          Serial.println(kb_buffer);
+        #endif
+        return KB_ERROR;
       }
     }
 
+    #if KB_DBG
+      sprintf(kb_buffer, "%s end case %i", kb_buffer, r);
+      Serial.println(kb_buffer);
+    #endif
+
     switch (r) {
+      case 27:   return KB_ESC;            // 27
+
       case 127:  return KB_BACKSPACE;      // 127
       case 32:   return KB_SPACE;          // 32
       case 13:   return KB_ENTER;          // 13
